@@ -1,77 +1,94 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { reduxForm, Field } from 'redux-form';
-import { finalizarCompra, novaCompra } from '../redux/actions';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
+import { novaCompra } from '../redux/actions';
 import { useNavigate } from 'react-router-dom';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 
-const renderTextField = ({
-  input,
-  label,
-  meta: { touched, error },
-  ...custom
-}) => (
-  <TextField
-    label={label}
-    placeholder={label}
-    error={touched && !!error}
-    helperText={touched && error}
-    {...input}
-    {...custom}
-  />
-);
+import produto01 from '../assets/imagens/purchase.png';
 
-const FinalizacaoCompra = ({ handleSubmit }) => {
-  const produtos = useSelector((state) => state.produtos);
-  const cliente = useSelector((state) => state.cliente);
+const FinalizacaoCompra = () => {
+  // Hooks para acessar o estado global Redux
+  const produtos = useSelector((state) => state.app.produtos || []);
+  const cliente = useSelector((state) => state.app.cliente || { nomeCliente: '', email: '', sexo: '' });
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const total = produtos.reduce((acc, produto) => acc + produto.quantidade, 0);
+  // Cálculo do total da compra
+  const total = produtos.reduce((acc, produto) => {
+    const preco = parseFloat(produto.preco.replace('R$', '').replace('.', '').replace(',', '.'));
+    return acc + preco * produto.quantidade;
+  }, 0);
 
-  const onSubmit = (values) => {
-    dispatch(finalizarCompra(values));
-    navigate('/finalizacao');
-  };
-
+  // Função para iniciar uma nova compra
   const iniciarNovaCompra = () => {
     dispatch(novaCompra());
     navigate('/');
   };
 
   return (
-    <div>
-      <h2>Finalização de Compra</h2>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <Field
-            name="nomeCliente"
-            component={renderTextField}
-            label="Nome do Cliente"
+    <Box
+      sx={{
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f0f0f0',
+      }}
+    >
+      <Box
+        sx={{
+          width: 400,
+          height: 450,
+          borderRadius: '5%',
+          padding: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#fff',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        <Box sx={{ width: '100%', textAlign: 'center', marginBottom: 2 }}>
+          <Typography
+            component="div"
+            sx={{ fontSize: '40px', fontWeight: 'bold', marginBottom: 1 }}
+          >
+            {cliente.nome}
+          </Typography>
+          <Typography
+            component="div"
+            sx={{ fontSize: '1.25rem', marginBottom: 1 }}
+          >
+            Sua compra no valor <strong style={{ color: '#007bff' }}>R$ {total.toFixed(2)}</strong>
+          </Typography>
+          <Typography
+            component="div"
+            sx={{ fontSize: '1.25rem' }}
+          >
+            foi finalizada com sucesso
+          </Typography>
+        </Box>
+        <Box sx={{ marginBottom: 2 }}>
+          <img
+            src={produto01}
+            alt="Imagem de Confirmação"
+            style={{ width: '100%', height: 'auto' }}
           />
-        </div>
-        <Button type="submit" variant="contained" color="primary">
-          Finalizar Compra
+        </Box>
+        <Button
+          variant="contained"
+          sx={{ backgroundColor: 'orange', color: 'white',marginTop: '20px', height: '50px',fontWeight: 'bold' , ':hover': { backgroundColor: 'darkorange' } }}
+          onClick={iniciarNovaCompra}
+        >
+          Iniciar Nova Compra
         </Button>
-      </form>
-      <h3>Resumo</h3>
-      <p>Nome do Cliente: {cliente.nomeCliente}</p>
-      <p>Total de Produtos: {total}</p>
-      <Button variant="contained" color="secondary" onClick={iniciarNovaCompra}>
-        Iniciar Nova Compra
-      </Button>
-    </div>
+      </Box>
+    </Box>
   );
 };
 
-export default reduxForm({
-  form: 'finalizacaoForm',
-  validate: (values) => {
-    const errors = {};
-    if (!values.nomeCliente) {
-      errors.nomeCliente = 'Obrigatório';
-    }
-    return errors;
-  },
-})(FinalizacaoCompra);
+export default FinalizacaoCompra;
